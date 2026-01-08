@@ -1,78 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>TheBros 3D Hub (3MF)</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TheBros 3D Viewer</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    
     <style>
-        body { margin: 0; background: #121212; color: white; font-family: sans-serif; overflow: hidden; }
+        body { margin: 0; font-family: sans-serif; background: #121212; color: white; }
+        
+        /* Password Overlay */
         #login-screen {
-            position: fixed; width: 100%; height: 100%; background: #1a1a1a;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #1a1a1a; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 100;
         }
-        input { padding: 10px; border-radius: 5px; border: none; margin-bottom: 10px; }
+        input { padding: 10px; border-radius: 5px; border: none; margin-bottom: 10px; width: 200px; }
         button { padding: 10px 20px; cursor: pointer; background: #3498db; color: white; border: none; border-radius: 5px; }
-        #container { display: none; width: 100vw; height: 100vh; }
+
+        /* Viewer Styles */
+        #viewer-container { display: none; height: 100vh; width: 100vw; }
+        model-viewer { width: 100%; height: 90%; background-color: #222; }
+        .controls { padding: 20px; text-align: center; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
-        <h1>TheBros Private 3D</h1>
-        <input type="password" id="passInput" placeholder="Password">
-        <button onclick="checkPass()">Enter</button>
+        <h1>Private 3D Hub</h1>
+        <input type="password" id="passInput" placeholder="Enter Password">
+        <button onclick="checkPass()">Access Models</button>
+        <p id="error" style="color: #e74c3c; margin-top: 10px;"></p>
     </div>
 
-    <div id="container"></div>
+    <div id="viewer-container">
+        <model-viewer 
+            id="main-viewer"
+            src="your-model.glb" 
+            alt="A 3D model" 
+            auto-rotate 
+            camera-controls 
+            shadow-intensity="1">
+        </model-viewer>
+        
+        <div class="controls">
+            <h2>Welcome, Brother</h2>
+            <p>Drag to rotate | Scroll to zoom</p>
+        </div>
+    </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
-
-    <script type="module">
-        import * as THREE from 'three';
-        import { ThreeMFLoader } from 'three/addons/loaders/ThreeMFLoader.js';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-        window.checkPass = function() {
-            if (document.getElementById('passInput').value === "thebros") {
+    <script>
+        function checkPass() {
+            const pass = document.getElementById('passInput').value;
+            // The password check
+            if (pass === "thebros") {
                 document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('container').style.display = 'block';
-                init3D();
+                document.getElementById('viewer-container').style.display = 'block';
+            } else {
+                document.getElementById('error').innerText = "Wrong password. Try again.";
             }
-        };
-
-        function init3D() {
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x222222);
-            
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 10, 10);
-
-            const renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.getElementById('container').appendChild(renderer.domElement);
-
-            const controls = new OrbitControls(camera, renderer.domElement);
-            scene.add(new THREE.AmbientLight(0xffffff, 1));
-
-            const loader = new ThreeMFLoader();
-            // CHANGE THIS TO YOUR FILENAME
-            loader.load('model.3mf', function (object) {
-                scene.add(object);
-                renderer.render(scene, camera);
-            });
-
-            function animate() {
-                requestAnimationFrame(animate);
-                controls.update();
-                renderer.render(scene, camera);
-            }
-            animate();
         }
+
+        // Allow "Enter" key to submit
+        document.getElementById("passInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                checkPass();
+            }
+        });
     </script>
 </body>
 </html>
