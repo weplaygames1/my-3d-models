@@ -13,19 +13,13 @@
     </script>
     <style>
         body { margin: 0; background: #0a0a0a; color: white; font-family: sans-serif; overflow: hidden; }
-        
-        /* Login Overlay */
         #login-screen {
             position: fixed; inset: 0; background: #111;
             display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
         }
         input { padding: 15px; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; background: #222; color: white; width: 220px; text-align: center; }
-        
-        /* Main App Layout */
         #app-container { display: none; height: 100vh; flex-direction: column; }
         #viewer-canvas { flex-grow: 1; width: 100%; cursor: grab; }
-
-        /* Gallery Tray */
         #tray {
             height: 130px; background: #000; border-top: 2px solid #333;
             display: flex; align-items: center; gap: 15px; padding: 0 20px; overflow-x: auto;
@@ -36,8 +30,6 @@
             justify-content: center; font-size: 12px; text-align: center; transition: 0.2s;
         }
         .thumb.active { border-color: #3498db; background: #1a2a3a; box-shadow: 0 0 10px #3498db; }
-
-        /* Top Bar */
         .top-bar { position: absolute; top: 20px; left: 0; right: 0; display: flex; justify-content: center; gap: 12px; pointer-events: none; }
         .btn { pointer-events: auto; padding: 12px 24px; border-radius: 25px; border: none; color: white; font-weight: bold; cursor: pointer; text-decoration: none; display: flex; align-items: center; }
         .import-btn { background: #8e44ad; }
@@ -57,14 +49,10 @@
             <button class="btn import-btn" onclick="document.getElementById('fileInput').click()">📂 IMPORT 3MF</button>
             <a id="dlLink" href="all items.3mf" download class="btn dl-btn">📥 DOWNLOAD</a>
         </div>
-
         <div id="viewer-canvas"></div>
-
         <div id="tray">
             <div class="thumb active" onclick="loadModel('all items.3mf', this)">All Items</div>
-            <div class="thumb" onclick="loadModel('model2.3mf', this)">Model 2</div>
         </div>
-
         <input type="file" id="fileInput" hidden accept=".3mf">
     </div>
 
@@ -75,6 +63,7 @@
 
         let scene, camera, renderer, controls, loader, currentObject;
 
+        // Using window. to make sure the HTML button can "see" the function
         window.checkLogin = function() {
             if (document.getElementById('passInput').value === "thebros") {
                 document.getElementById('login-screen').style.display = 'none';
@@ -86,13 +75,11 @@
         function init() {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x0a0a0a);
-            
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / (window.innerHeight - 130), 1, 2000);
             camera.position.set(200, 200, 200);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight - 130);
-            renderer.setPixelRatio(window.devicePixelRatio);
             document.getElementById('viewer-canvas').appendChild(renderer.domElement);
 
             scene.add(new THREE.AmbientLight(0xffffff, 2.5));
@@ -101,38 +88,28 @@
             scene.add(light);
 
             controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-
             loader = new ThreeMFLoader();
-            loadModel('all items.3mf'); // Load initial model
-
+            
+            loadModel('all items.3mf'); 
             animate();
         }
 
         window.loadModel = function(url, thumb) {
             if (currentObject) scene.remove(currentObject);
-            
             loader.load(url, (object) => {
                 currentObject = object;
-                
-                // Auto-center and scale
                 const box = new THREE.Box3().setFromObject(object);
                 const center = box.getCenter(new THREE.Vector3());
                 object.position.sub(center);
                 scene.add(object);
-                
-                // Update Download Button
                 document.getElementById('dlLink').href = url;
-                document.getElementById('dlLink').download = url.split('/').pop();
-            }, undefined, (err) => console.error("3MF Load Error:", err));
-
+            });
             if (thumb) {
                 document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
                 thumb.classList.add('active');
             }
         };
 
-        // Handle Imports
         document.getElementById('fileInput').onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -151,13 +128,6 @@
             if (controls) controls.update();
             if (renderer) renderer.render(scene, camera);
         }
-
-        window.onresize = () => {
-            const h = window.innerHeight - 130;
-            camera.aspect = window.innerWidth / h;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, h);
-        };
     </script>
 </body>
 </html>
