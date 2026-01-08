@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TheBros 3D Vault - Fixed</title>
+    <title>TheBros 3D Vault - Pro</title>
     <script type="importmap">
         {
             "imports": {
@@ -18,7 +18,7 @@
             display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
         }
         input { padding: 15px; border-radius: 8px; border: 1px solid #333; margin-bottom: 10px; background: #222; color: white; width: 220px; text-align: center; }
-        #app-container { display: none; height: 100vh; flex-direction: column; }
+        #app-container { display: none; height: 100vh; flex-direction: column; position: relative; }
         #viewer-canvas { flex-grow: 1; width: 100%; cursor: grab; }
         #tray {
             height: 130px; background: #000; border-top: 2px solid #333;
@@ -30,7 +30,7 @@
             justify-content: center; font-size: 12px; text-align: center; transition: 0.2s;
         }
         .thumb.active { border-color: #3498db; background: #1a2a3a; box-shadow: 0 0 10px #3498db; }
-        .top-bar { position: absolute; top: 20px; left: 0; right: 0; display: flex; justify-content: center; gap: 12px; pointer-events: none; }
+        .top-bar { position: absolute; top: 20px; left: 0; right: 0; display: flex; justify-content: center; gap: 12px; pointer-events: none; z-index: 10; }
         .btn { pointer-events: auto; padding: 12px 24px; border-radius: 25px; border: none; color: white; font-weight: bold; cursor: pointer; text-decoration: none; display: flex; align-items: center; }
         .login-btn { background: #3498db; width: 252px; justify-content: center; }
         .import-btn { background: #8e44ad; }
@@ -43,6 +43,7 @@
         <h1 style="letter-spacing: 5px;">THE BROS 3D</h1>
         <input type="password" id="passInput" placeholder="Password">
         <button id="accessBtn" class="btn login-btn">ACCESS HUB</button>
+        <p id="error-msg" style="color: #e74c3c; margin-top: 15px;"></p>
     </div>
 
     <div id="app-container">
@@ -51,7 +52,7 @@
             <a id="dlLink" href="all items.3mf" download class="btn dl-btn">📥 DOWNLOAD</a>
         </div>
         <div id="viewer-canvas"></div>
-        <div id="tray">
+        <div id="tray" class="gallery-tray">
             <div id="defaultThumb" class="thumb active">All Items</div>
         </div>
         <input type="file" id="fileInput" hidden accept=".3mf">
@@ -64,77 +65,98 @@
 
         let scene, camera, renderer, controls, loader, currentObject;
 
-        // FIXED: Instead of onclick in HTML, we attach the event here inside the module
+        // FIXED: Attach event listener inside the module to fix "ReferenceError: checkLogin is not defined"
         document.getElementById('accessBtn').addEventListener('click', () => {
-            if (document.getElementById('passInput').value === "thebros") {
+            const pass = document.getElementById('passInput').value;
+            if (pass === "thebros") {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('app-container').style.display = 'flex';
                 init();
+            } else {
+                document.getElementById('error-msg').innerText = "Access Denied, Bro.";
             }
         });
 
         function init() {
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x0a0a0a);
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth / (window.innerHeight - 130), 1, 2000);
-            camera.position.set(200, 200, 200);
+            
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / (window.innerHeight - 130), 1, 5000);
+            camera.position.set(300, 300, 300);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight - 130);
+            renderer.setPixelRatio(window.devicePixelRatio);
             document.getElementById('viewer-canvas').appendChild(renderer.domElement);
 
-            scene.add(new THREE.AmbientLight(0xffffff, 2.5));
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(1, 1, 1);
-            scene.add(light);
+            scene.add(new THREE.AmbientLight(0xffffff, 2));
+            const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+            sun.position.set(200, 200, 200);
+            scene.add(sun);
 
-            // FIXED: OrbitControls is now properly initialized from the import
+            // FIXED: Using the corrected OrbitControls import
             controls = new OrbitControls(camera, renderer.domElement);
-            loader = new ThreeMFLoader();
+            controls.enableDamping = true;
             
+            loader = new ThreeMFLoader();
             loadModel('all items.3mf'); 
             animate();
         }
 
         window.loadModel = function(url, thumb) {
             if (currentObject) scene.remove(currentObject);
+            
+            // Fixed the 3MF loading logic to prevent JSON/Syntax errors
             loader.load(url, (object) => {
                 currentObject = object;
                 const box = new THREE.Box3().setFromObject(object);
                 const center = box.getCenter(new THREE.Vector3());
                 object.position.sub(center);
                 scene.add(object);
+
                 document.getElementById('dlLink').href = url;
+                document.getElementById('dlLink').download = url.split('/').pop();
+            }, undefined, (error) => {
+                console.error("3MF Load Fail:", error);
             });
+
             if (thumb) {
                 document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
                 thumb.classList.add('active');
             }
         };
 
-        // Connect the default thumb manually
+        // Manual thumb link
         document.getElementById('defaultThumb').onclick = function() {
             loadModel('all items.3mf', this);
         };
 
+        // Import logic
         document.getElementById('fileInput').onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
                 const url = URL.createObjectURL(file);
-                const newThumb = document.createElement('div');
-                newThumb.className = 'thumb';
-                newThumb.innerText = file.name;
-                newThumb.onclick = () => loadModel(url, newThumb);
-                document.getElementById('tray').appendChild(newThumb);
-                loadModel(url, newThumb);
+                const thumb = document.createElement('div');
+                thumb.className = 'thumb';
+                thumb.innerText = file.name;
+                thumb.onclick = () => loadModel(url, thumb);
+                document.querySelector('.gallery-tray').appendChild(thumb);
+                loadModel(url, thumb);
             }
         };
 
         function animate() {
             requestAnimationFrame(animate);
             if (controls) controls.update();
-            if (renderer) renderer.render(scene, camera);
+            renderer.render(scene, camera);
         }
+
+        window.onresize = () => {
+            const h = window.innerHeight - 130;
+            camera.aspect = window.innerWidth / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, h);
+        };
     </script>
 </body>
 </html>
