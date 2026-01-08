@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TheBros 3D Viewer</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    
+    <style>
+        body { margin: 0; font-family: sans-serif; background: #121212; color: white; }
+        
+        /* Password Overlay */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #1a1a1a; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        input { padding: 10px; border-radius: 5px; border: none; margin-bottom: 10px; width: 200px; }
+        button { padding: 10px 20px; cursor: pointer; background: #3498db; color: white; border: none; border-radius: 5px; }
+
+        /* Viewer Styles */
+        #viewer-container { display: none; height: 100vh; width: 100vw; }
+        model-viewer { width: 100%; height: 90%; background-color: #222; }
+        .controls { padding: 20px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <h1>Private 3D Hub</h1>
+        <input type="password" id="passInput" placeholder="Enter Password">
+        <button onclick="checkPass()">Access Models</button>
+        <p id="error" style="color: #e74c3c; margin-top: 10px;"></p>
+    </div>
+
+    <div id="viewer-container">
+        <model-viewer 
+            id="main-viewer"
+            src="your-model.glb" 
+            alt="A 3D model" 
+            auto-rotate 
+            camera-controls 
+            shadow-intensity="1">
+        </model-viewer>
+        
+        <div class="controls">
+            <h2>Welcome, Brother</h2>
+            <p>Drag to rotate | Scroll to zoom</p>
+        </div>
+    </div>
+
+    <script>
+        function checkPass() {
+            const pass = document.getElementById('passInput').value;
+            // The password check
+            if (pass === "thebros") {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('viewer-container').style.display = 'block';
+            } else {
+                document.getElementById('error').innerText = "Wrong password. Try again.";
+            }
+        }
+
+        // Allow "Enter" key to submit
+        document.getElementById("passInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                checkPass();
+            }
+        });
+    </script>
+</body>
+</html>
