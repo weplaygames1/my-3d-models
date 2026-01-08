@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TheBros 3D Vault</title>
     
     <script type="importmap">
@@ -28,14 +27,14 @@
         }
         .login-btn { 
             padding: 15px 30px; cursor: pointer; background: #3498db; color: white; 
-            border: none; border-radius: 8px; font-weight: bold; width: 284px;
+            border: none; border-radius: 8px; font-weight: bold; width: 284px; font-size: 16px;
         }
 
         /* App View */
         #app-container { display: none; width: 100vw; height: 100vh; position: relative; }
         #viewer-canvas { width: 100%; height: 100%; }
 
-        /* UI Overlay */
+        /* Download Button Overlay */
         .ui-overlay {
             position: absolute; bottom: 40px; width: 100%; 
             display: flex; justify-content: center; z-index: 500; pointer-events: none;
@@ -45,23 +44,21 @@
             border-radius: 10px; border: none; font-weight: bold; font-size: 1.2em;
             cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        #loading-text { display: none; color: #3498db; margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
         <h1 style="letter-spacing: 3px;">THE BROS 3D</h1>
-        <input type="password" id="passInput" placeholder="Password" autocomplete="off">
-        <button class="login-btn" id="loginBtn">ACCESS HUB</button>
-        <div id="loading-text">Loading 3D Engine...</div>
+        <input type="password" id="passInput" placeholder="Password" onkeydown="if(event.key==='Enter') window.checkPass()">
+        <button class="login-btn" onclick="window.checkPass()">ACCESS HUB</button>
         <p id="error-msg" style="color: #e74c3c; margin-top: 15px;"></p>
     </div>
 
     <div id="app-container">
         <div id="viewer-canvas"></div>
         <div class="ui-overlay">
-            <button class="download-btn" id="downBtn">📥 DOWNLOAD 3MF</button>
+            <button class="download-btn" onclick="window.downloadModel()">📥 DOWNLOAD 3MF</button>
         </div>
     </div>
 
@@ -70,37 +67,19 @@
         import { ThreeMFLoader } from 'three/addons/loaders/ThreeMFLoader.js';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // FILE CONFIGURATION
         const FILE_NAME = 'all items.3mf'; 
 
-        const passInput = document.getElementById('passInput');
-        const loginBtn = document.getElementById('loginBtn');
-        const downBtn = document.getElementById('downBtn');
-
-        // Handling the "Enter" key
-        passInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                checkPass();
-            }
-        });
-
-        loginBtn.addEventListener('click', checkPass);
-        downBtn.addEventListener('click', downloadModel);
-
-        function checkPass() {
-            if (passInput.value === "thebros") {
-                document.getElementById('error-msg').innerText = "";
-                document.getElementById('loading-text').style.display = "block";
-                
-                setTimeout(() => {
-                    document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('app-container').style.display = 'block';
-                    init3D();
-                }, 100);
+        // Defined on window so the HTML buttons can see them
+        window.checkPass = function() {
+            const input = document.getElementById('passInput').value;
+            if (input === "thebros") {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+                init3D();
             } else {
                 document.getElementById('error-msg').innerText = "Wrong password, bro.";
             }
-        }
+        };
 
         function init3D() {
             const scene = new THREE.Scene();
@@ -123,14 +102,12 @@
             controls.enableDamping = true;
 
             const loader = new ThreeMFLoader();
-            // Using encodeURIComponent to handle the space in "all items.3mf"
+            // Handle spaces in the filename
             loader.load(encodeURIComponent(FILE_NAME), (object) => {
                 const box = new THREE.Box3().setFromObject(object);
                 const center = box.getCenter(new THREE.Vector3());
                 object.position.sub(center);
                 scene.add(object);
-            }, undefined, (err) => {
-                console.error("Load error. Make sure the file is named 'all items.3mf' exactly.");
             });
 
             function animate() {
@@ -147,14 +124,14 @@
             });
         }
 
-        function downloadModel() {
+        window.downloadModel = function() {
             const link = document.createElement('a');
             link.href = FILE_NAME;
             link.download = FILE_NAME;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-        }
+        };
     </script>
 </body>
 </html>
