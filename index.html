@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TheBros 3D Vault - Gallery</title>
+    <title>TheBros 3D Vault - Pro</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <style>
         body { margin: 0; background: #121212; color: white; font-family: sans-serif; overflow: hidden; }
@@ -12,7 +12,7 @@
             position: fixed; width: 100%; height: 100%; background: #1a1a1a;
             display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
         }
-        input { 
+        input[type="password"] { 
             padding: 15px; border-radius: 8px; border: 2px solid #333; 
             margin-bottom: 15px; background: #222; color: white; width: 250px; text-align: center; font-size: 16px;
         }
@@ -25,25 +25,25 @@
         #app-container { display: none; width: 100vw; height: 100vh; position: relative; }
         model-viewer { width: 100%; height: 100%; background-color: #121212; }
 
-        /* Gallery & Download Controls */
+        /* UI Overlay */
         .ui-overlay {
             position: absolute; bottom: 30px; width: 100%; 
             display: flex; flex-direction: column; align-items: center; gap: 15px;
             z-index: 500; pointer-events: none;
         }
-        .controls-row { display: flex; gap: 10px; pointer-events: auto; }
+        .controls-row { display: flex; gap: 10px; pointer-events: auto; flex-wrap: wrap; justify-content: center; }
         
-        select {
+        select, .action-btn {
             padding: 15px; border-radius: 10px; background: #333; color: white;
-            border: 2px solid #444; font-weight: bold; cursor: pointer;
+            border: 2px solid #444; font-weight: bold; cursor: pointer; font-size: 14px;
+            text-decoration: none; display: flex; align-items: center;
         }
 
-        .download-btn {
-            background: #27ae60; color: white; padding: 15px 30px;
-            border-radius: 10px; border: none; font-weight: bold;
-            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            text-decoration: none;
-        }
+        .import-btn { background: #8e44ad; border-color: #9b59b6; }
+        .download-btn { background: #27ae60; border-color: #2ecc71; }
+        
+        /* Hidden file input */
+        #fileInput { display: none; }
     </style>
 </head>
 <body>
@@ -61,12 +61,16 @@
         <div class="ui-overlay">
             <div class="controls-row">
                 <select id="modelSelect">
-                    <option value="all items.3mf">Model 1: All Items</option>
-                    <option value="model2.3mf">Model 2: Name Here</option>
-                    <option value="model3.3mf">Model 3: Name Here</option>
+                    <option value="all items.3mf">Default: All Items</option>
+                    <option value="model2.3mf">Model 2</option>
                 </select>
 
-                <a id="dlLink" href="all items.3mf" download class="download-btn">📥 DOWNLOAD</a>
+                <button class="action-btn import-btn" onclick="document.getElementById('fileInput').click()">
+                    📂 IMPORT 3MF
+                </button>
+                <input type="file" id="fileInput" accept=".3mf,.glb,.gltf">
+
+                <a id="dlLink" href="all items.3mf" download class="action-btn download-btn">📥 DOWNLOAD</a>
             </div>
         </div>
     </div>
@@ -75,6 +79,7 @@
         const accessBtn = document.getElementById('accessBtn');
         const passInput = document.getElementById('passInput');
         const modelSelect = document.getElementById('modelSelect');
+        const fileInput = document.getElementById('fileInput');
         const viewer = document.getElementById('viewer');
         const dlLink = document.getElementById('dlLink');
 
@@ -91,12 +96,29 @@
         accessBtn.onclick = tryLogin;
         passInput.onkeydown = (e) => { if(e.key === 'Enter') tryLogin(); };
 
-        // Gallery Logic: Update viewer and download link when model changes
+        // Gallery Change
         modelSelect.onchange = function() {
-            const selectedFile = this.value;
-            viewer.src = selectedFile;
-            dlLink.href = selectedFile;
-            dlLink.download = selectedFile;
+            viewer.src = this.value;
+            dlLink.href = this.value;
+            dlLink.download = this.value;
+        };
+
+        // Import Function Logic
+        fileInput.onchange = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                viewer.src = url; // Load the local file into the viewer
+                dlLink.href = url; // Set download link to the local file
+                dlLink.download = file.name;
+                
+                // Add a temporary option to the gallery list
+                const newOpt = document.createElement('option');
+                newOpt.value = url;
+                newOpt.text = "Imported: " + file.name;
+                newOpt.selected = true;
+                modelSelect.appendChild(newOpt);
+            }
         };
     </script>
 </body>
