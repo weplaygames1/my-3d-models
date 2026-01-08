@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TheBros 3D Vault - Pro</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <style>
@@ -25,7 +26,7 @@
         #app-container { display: none; width: 100vw; height: 100vh; position: relative; }
         model-viewer { width: 100%; height: 100%; background-color: #121212; }
 
-        /* UI Overlay */
+        /* UI Overlay for Controls */
         .ui-overlay {
             position: absolute; bottom: 30px; width: 100%; 
             display: flex; flex-direction: column; align-items: center; gap: 15px;
@@ -34,7 +35,7 @@
         .controls-row { display: flex; gap: 10px; pointer-events: auto; flex-wrap: wrap; justify-content: center; }
         
         select, .action-btn {
-            padding: 15px; border-radius: 10px; background: #333; color: white;
+            padding: 12px 20px; border-radius: 10px; background: #333; color: white;
             border: 2px solid #444; font-weight: bold; cursor: pointer; font-size: 14px;
             text-decoration: none; display: flex; align-items: center;
         }
@@ -42,7 +43,6 @@
         .import-btn { background: #8e44ad; border-color: #9b59b6; }
         .download-btn { background: #27ae60; border-color: #2ecc71; }
         
-        /* Hidden file input */
         #fileInput { display: none; }
     </style>
 </head>
@@ -56,17 +56,16 @@
     </div>
 
     <div id="app-container">
-        <model-viewer id="viewer" src="all items.3mf" camera-controls auto-rotate shadow-intensity="1"></model-viewer>
+        <model-viewer id="viewer" src="all items.3mf" camera-controls auto-rotate shadow-intensity="1" ar></model-viewer>
 
         <div class="ui-overlay">
             <div class="controls-row">
                 <select id="modelSelect">
                     <option value="all items.3mf">Default: All Items</option>
-                    <option value="model2.3mf">Model 2</option>
-                </select>
+                    </select>
 
                 <button class="action-btn import-btn" onclick="document.getElementById('fileInput').click()">
-                    📂 IMPORT 3MF
+                    📂 IMPORT FILE
                 </button>
                 <input type="file" id="fileInput" accept=".3mf,.glb,.gltf">
 
@@ -93,26 +92,29 @@
             }
         }
 
-        accessBtn.onclick = tryLogin;
-        passInput.onkeydown = (e) => { if(e.key === 'Enter') tryLogin(); };
+        accessBtn.addEventListener('click', tryLogin);
+        passInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') tryLogin(); });
 
-        // Gallery Change
+        // Gallery Switcher
         modelSelect.onchange = function() {
             viewer.src = this.value;
             dlLink.href = this.value;
             dlLink.download = this.value;
         };
 
-        // Import Function Logic
+        // --- NEW IMPORT FUNCTION ---
         fileInput.onchange = function(event) {
             const file = event.target.files[0];
             if (file) {
+                // Create a temporary path for the local file
                 const url = URL.createObjectURL(file);
-                viewer.src = url; // Load the local file into the viewer
-                dlLink.href = url; // Set download link to the local file
+                
+                // Update viewer and download button
+                viewer.src = url;
+                dlLink.href = url;
                 dlLink.download = file.name;
                 
-                // Add a temporary option to the gallery list
+                // Add to gallery list so you can find it again
                 const newOpt = document.createElement('option');
                 newOpt.value = url;
                 newOpt.text = "Imported: " + file.name;
