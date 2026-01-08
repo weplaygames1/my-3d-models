@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TheBros 3D Vault - Pro Gallery</title>
+    <title>TheBros 3D Vault - Fixed</title>
     <script type="importmap">
         {
             "imports": {
@@ -32,6 +32,7 @@
         .thumb.active { border-color: #3498db; background: #1a2a3a; box-shadow: 0 0 10px #3498db; }
         .top-bar { position: absolute; top: 20px; left: 0; right: 0; display: flex; justify-content: center; gap: 12px; pointer-events: none; }
         .btn { pointer-events: auto; padding: 12px 24px; border-radius: 25px; border: none; color: white; font-weight: bold; cursor: pointer; text-decoration: none; display: flex; align-items: center; }
+        .login-btn { background: #3498db; width: 252px; justify-content: center; }
         .import-btn { background: #8e44ad; }
         .dl-btn { background: #27ae60; }
     </style>
@@ -41,7 +42,7 @@
     <div id="login-screen">
         <h1 style="letter-spacing: 5px;">THE BROS 3D</h1>
         <input type="password" id="passInput" placeholder="Password">
-        <button class="btn" onclick="checkLogin()" style="background:#3498db; width:252px; justify-content:center;">ACCESS HUB</button>
+        <button id="accessBtn" class="btn login-btn">ACCESS HUB</button>
     </div>
 
     <div id="app-container">
@@ -51,7 +52,7 @@
         </div>
         <div id="viewer-canvas"></div>
         <div id="tray">
-            <div class="thumb active" onclick="loadModel('all items.3mf', this)">All Items</div>
+            <div id="defaultThumb" class="thumb active">All Items</div>
         </div>
         <input type="file" id="fileInput" hidden accept=".3mf">
     </div>
@@ -63,14 +64,14 @@
 
         let scene, camera, renderer, controls, loader, currentObject;
 
-        // Using window. to make sure the HTML button can "see" the function
-        window.checkLogin = function() {
+        // FIXED: Instead of onclick in HTML, we attach the event here inside the module
+        document.getElementById('accessBtn').addEventListener('click', () => {
             if (document.getElementById('passInput').value === "thebros") {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('app-container').style.display = 'flex';
                 init();
             }
-        };
+        });
 
         function init() {
             scene = new THREE.Scene();
@@ -87,6 +88,7 @@
             light.position.set(1, 1, 1);
             scene.add(light);
 
+            // FIXED: OrbitControls is now properly initialized from the import
             controls = new OrbitControls(camera, renderer.domElement);
             loader = new ThreeMFLoader();
             
@@ -108,6 +110,11 @@
                 document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
                 thumb.classList.add('active');
             }
+        };
+
+        // Connect the default thumb manually
+        document.getElementById('defaultThumb').onclick = function() {
+            loadModel('all items.3mf', this);
         };
 
         document.getElementById('fileInput').onchange = (e) => {
